@@ -5,7 +5,7 @@
 ## Stack
 - Golang
 - Gin
-- Postgres
+- Sqlite
 - testify
 
 ## Architecture
