@@ -9,15 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type PaymentContrller struct {
+type PaymentController struct {
 	paymentService service.PaymentService
 }
 
-func NewPaymentController(paymentService *service.PaymentService) *PaymentContrller {
-	return &PaymentContrller{paymentService: *paymentService}
+func NewPaymentController(paymentService *service.PaymentService) *PaymentController {
+	return &PaymentController{paymentService: *paymentService}
 }
 
-func (pc *PaymentContrller) GetAllPayments(c *gin.Context) {
+func (pc *PaymentController) GetAllPayments(c *gin.Context) {
 	payments, err := pc.paymentService.GetAllPayments()
 	if err != nil {
 		c.IndentedJSON(err.Status, gin.H{"error": err.Message})
@@ -26,7 +26,7 @@ func (pc *PaymentContrller) GetAllPayments(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, payments)
 }
 
-func (pc *PaymentContrller) GetPaymentsByIbanCdt(c *gin.Context) {
+func (pc *PaymentController) GetPaymentsByIbanCdt(c *gin.Context) {
 	iban := c.Param("iban")
 	payments, err := pc.paymentService.GetPaymentsByIban(iban, "creditor")
 	if err != nil {
@@ -36,7 +36,7 @@ func (pc *PaymentContrller) GetPaymentsByIbanCdt(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, payments)
 }
 
-func (pc *PaymentContrller) GetPaymentsByIbanDbt(c *gin.Context) {
+func (pc *PaymentController) GetPaymentsByIbanDbt(c *gin.Context) {
 	iban := c.Param("iban")
 	payments, err := pc.paymentService.GetPaymentsByIban(iban, "debtor")
 	if err != nil {
@@ -46,7 +46,7 @@ func (pc *PaymentContrller) GetPaymentsByIbanDbt(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, payments)
 }
 
-func (pc *PaymentContrller) PaymentHandler(responseChannel chan<- model.PaymentResponse) gin.HandlerFunc {
+func (pc *PaymentController) PaymentHandler(responseChannel chan<- model.PaymentResponse) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var payment model.Payment
 		if err := c.ShouldBindJSON(&payment); err != nil {
