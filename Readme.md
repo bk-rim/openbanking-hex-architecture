@@ -8,6 +8,9 @@
 - Postgres
 - testify
 
+## Architecture
+- hexagonal architecture
+
 ## Features
 
 - generate bank payment
