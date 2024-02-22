@@ -1,12 +1,12 @@
-package repository
+package database
 
 import (
 	"github.com/bk-rim/openbanking/model"
 )
 
-type SqliteBankRepository struct{}
+type BankRepository struct{}
 
-func (br *SqliteBankRepository) UpdatePaymentStatus(response model.PaymentResponse) error {
+func (br *BankRepository) UpdatePaymentStatus(response model.PaymentResponse) error {
 	_, err := db.Exec("UPDATE payments SET status = ? WHERE idempotency = ?", response.Status, response.Id)
 	if err != nil {
 		return err

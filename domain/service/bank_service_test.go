@@ -13,6 +13,12 @@ import (
 
 type MockBankRepository struct{}
 
+type MockFileCsvRepository struct{}
+
+func (*MockFileCsvRepository) Save(response model.PaymentResponse) {
+	return
+}
+
 func (*MockBankRepository) UpdatePaymentStatus(response model.PaymentResponse) error {
 	return nil
 }
@@ -32,7 +38,8 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 }
 func TestBankService_notifyClient(t *testing.T) {
 	mockBankRepository := &MockBankRepository{}
-	bankService := NewBankService(mockBankRepository)
+	mockFileCsvRepository := &MockFileCsvRepository{}
+	bankService := NewBankService(mockBankRepository, mockFileCsvRepository)
 	paymentResponse := model.PaymentResponse{Id: "JBXXXZZ", Status: "PROCESSED"}
 	go serverWebhook()
 	statusCode := bankService.notifyClient(paymentResponse, "http://localhost:8080/webhook")
@@ -45,7 +52,8 @@ func TestBankService_HandleBankResponses(t *testing.T) {
 	webhookURL := "http://localhost:8080/webhook"
 
 	mockBankRepository := &MockBankRepository{}
-	bankService := NewBankService(mockBankRepository)
+	mockFileCsvRepository := &MockFileCsvRepository{}
+	bankService := NewBankService(mockBankRepository, mockFileCsvRepository)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

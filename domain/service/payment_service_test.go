@@ -12,6 +12,18 @@ import (
 
 type MockPaymentRepository struct{}
 
+type MockIKeyRepository struct{}
+
+type MockFileXmlRepository struct{}
+
+func (*MockFileXmlRepository) Save(xmlData []byte, idempotencyKey string, responseChannel chan<- model.PaymentResponse) {
+	return
+}
+
+func (*MockIKeyRepository) Generate() (string, error) {
+	return "JXJ" + "XXXZ", nil
+}
+
 func (*MockPaymentRepository) FindAll() ([]model.Payment, error) {
 	return []model.Payment{
 		{DebtorIBAN: "AE1234567890", CreditorIBAN: "BE0987654321", Amount: 100.0},
@@ -59,7 +71,11 @@ func TestPaymentService_GetAllPayments(t *testing.T) {
 
 	mockPaymentRepository := &MockPaymentRepository{}
 
-	paymentService := service.NewPaymentService(mockPaymentRepository)
+	mockFileXmlRepository := &MockFileXmlRepository{}
+
+	mockIKeyRepository := &MockIKeyRepository{}
+
+	paymentService := service.NewPaymentService(mockPaymentRepository, mockFileXmlRepository, mockIKeyRepository)
 
 	expectedPayments := []model.Payment{
 		{DebtorIBAN: "AE1234567890", CreditorIBAN: "BE0987654321", Amount: 100.0},
@@ -77,9 +93,14 @@ func TestPaymentService_GetAllPayments(t *testing.T) {
 }
 
 func TestPaymentService_GetPaymentsByIban(t *testing.T) {
+
 	mockPaymentRepository := &MockPaymentRepository{}
 
-	paymentService := service.NewPaymentService(mockPaymentRepository)
+	mockFileXmlRepository := &MockFileXmlRepository{}
+
+	mockIKeyRepository := &MockIKeyRepository{}
+
+	paymentService := service.NewPaymentService(mockPaymentRepository, mockFileXmlRepository, mockIKeyRepository)
 
 	iban_1 := "DE0987654321"
 	actor_1 := "creditor"
@@ -120,15 +141,18 @@ func TestPaymentService_HandlePayment(t *testing.T) {
 	}
 	mockPaymentRepository := &MockPaymentRepository{}
 
-	paymentService := service.NewPaymentService(mockPaymentRepository)
+	mockFileXmlRepository := &MockFileXmlRepository{}
+
+	mockIKeyRepository := &MockIKeyRepository{}
+
+	paymentService := service.NewPaymentService(mockPaymentRepository, mockFileXmlRepository, mockIKeyRepository)
 
 	payment := model.Payment{
-		DebtorIBAN:           "AE1234567890",
-		DebtorName:           "John Doe",
-		CreditorIBAN:         "BE0987654321",
-		CreditorName:         "Jane Doe",
-		Amount:               100.0,
-		IdempotencyUniqueKey: "JBXXXZZ",
+		DebtorIBAN:   "AE1234567890",
+		DebtorName:   "John Doe",
+		CreditorIBAN: "BE0987654321",
+		CreditorName: "Jane Doe",
+		Amount:       100.0,
 	}
 
 	responseChannel := make(chan model.PaymentResponse)
@@ -139,7 +163,7 @@ func TestPaymentService_HandlePayment(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	} else {
 		paymentResponse := <-responseChannel
-		assert.Equal(t, "PENDING", paymentResponse.Status)
+		assert.Equal(t, "PROCESSED", paymentResponse.Status)
 	}
 
 }

@@ -6,29 +6,25 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
-	"github.com/bk-rim/openbanking/domain/utils"
 	"github.com/bk-rim/openbanking/model"
 )
 
 type BankService struct {
-	bankRepository IBankRepository
+	bankRepository    IBankRepository
+	fileCsvRepository IFileCsvRepository
 }
 
 type IBankRepository interface {
 	UpdatePaymentStatus(response model.PaymentResponse) error
 }
 
-func NewBankService(bankRepository IBankRepository) *BankService {
-	return &BankService{bankRepository: bankRepository}
+type IFileCsvRepository interface {
+	Save(response model.PaymentResponse)
 }
 
-func (bs *BankService) simulateBankProcessing(idempotencyKey string, responseChannel chan<- model.PaymentResponse) {
-	time.Sleep(5 * time.Second)
-
-	status := "PROCESSED"
-	responseChannel <- model.PaymentResponse{Id: idempotencyKey, Status: status}
+func NewBankService(bankRepository IBankRepository, fileCsvRepository IFileCsvRepository) *BankService {
+	return &BankService{bankRepository: bankRepository, fileCsvRepository: fileCsvRepository}
 }
 
 func (bs *BankService) notifyClient(paymentResponse model.PaymentResponse, webHookUrl string) int {
@@ -76,7 +72,7 @@ func (bs *BankService) HandleBankResponses(responseChannel <-chan model.PaymentR
 		if err := bs.bankRepository.UpdatePaymentStatus(response); err != nil {
 			fmt.Println("error updating status in database")
 		}
-		utils.DepositResponseInBankFolder(response)
+		bs.fileCsvRepository.Save(response)
 		if response.Status != "PENDING" {
 			bankService := BankService{}
 			bankService.notifyClient(response, webhookUrl)

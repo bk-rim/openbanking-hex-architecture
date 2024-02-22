@@ -1,7 +1,6 @@
 package service
 
 import (
-	"github.com/bk-rim/openbanking/domain/utils"
 	"github.com/bk-rim/openbanking/helper"
 	"github.com/bk-rim/openbanking/model"
 	"github.com/go-playground/validator/v10"
@@ -9,6 +8,8 @@ import (
 
 type PaymentService struct {
 	paymentRepository IPaymentRepository
+	iKeyRepository    IdempotentKey
+	fileXmlRepository IFileXmlRepository
 }
 
 type IPaymentRepository interface {
@@ -18,13 +19,21 @@ type IPaymentRepository interface {
 	Save(payment model.Payment) error
 }
 
+type IdempotentKey interface {
+	Generate() (string, error)
+}
+
+type IFileXmlRepository interface {
+	Save(xmlData []byte, idempotencyKey string, responseChannel chan<- model.PaymentResponse)
+}
+
 type ErrorService struct {
 	Message string
 	Status  int
 }
 
-func NewPaymentService(paymentRepository IPaymentRepository) *PaymentService {
-	return &PaymentService{paymentRepository: paymentRepository}
+func NewPaymentService(paymentRepository IPaymentRepository, fileXmlRepository IFileXmlRepository, generateIdempotentKey IdempotentKey) *PaymentService {
+	return &PaymentService{paymentRepository: paymentRepository, fileXmlRepository: fileXmlRepository, iKeyRepository: generateIdempotentKey}
 }
 
 func (ps *PaymentService) GetAllPayments() ([]model.Payment, *ErrorService) {
@@ -67,7 +76,7 @@ func (ps *PaymentService) HandlePayment(payment model.Payment, responseChannel c
 		return &ErrorService{"iban not valid", 400}
 	}
 
-	iKey, err := utils.GenerateIdempotentKey()
+	iKey, err := ps.iKeyRepository.Generate()
 	if err != nil {
 		return &ErrorService{err.Error(), 500}
 	}
@@ -78,7 +87,7 @@ func (ps *PaymentService) HandlePayment(payment model.Payment, responseChannel c
 		return &ErrorService{err.Error(), 400}
 	}
 
-	xmlData, err := utils.GenerateXML(payment)
+	xmlData, err := generateXML(payment)
 	if err != nil {
 		return &ErrorService{err.Error(), 500}
 	}
@@ -87,10 +96,9 @@ func (ps *PaymentService) HandlePayment(payment model.Payment, responseChannel c
 		return &ErrorService{err.Error(), 500}
 	}
 
-	go utils.DepositPaymentInBankFolder(xmlData, payment.IdempotencyUniqueKey, responseChannel)
+	go ps.fileXmlRepository.Save(xmlData, payment.IdempotencyUniqueKey, responseChannel)
 
-	bankService := BankService{}
-	go bankService.simulateBankProcessing(payment.IdempotencyUniqueKey, responseChannel)
+	go simulateBankProcessing(payment.IdempotencyUniqueKey, responseChannel)
 
 	return nil
 }

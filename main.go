@@ -8,7 +8,9 @@ import (
 
 	"github.com/bk-rim/openbanking/api/middleware"
 	"github.com/bk-rim/openbanking/domain/service"
-	repository "github.com/bk-rim/openbanking/repository/sqlite"
+	"github.com/bk-rim/openbanking/repository/file"
+	database "github.com/bk-rim/openbanking/repository/sqlite"
+	"github.com/bk-rim/openbanking/repository/utils"
 
 	"github.com/bk-rim/openbanking/model"
 
@@ -25,13 +27,16 @@ func loadEnv() {
 func main() {
 
 	loadEnv()
-	repository.InitSqlite()
+	database.InitSqlite()
 
 	responseChannel := make(chan model.PaymentResponse)
-	bankRepository := &repository.SqliteBankRepository{}
-	bankService := service.NewBankService(bankRepository)
-	paymentRepository := &repository.SqlitePaymentRepository{}
-	paymentService := service.NewPaymentService(paymentRepository)
+	bankRepository := &database.BankRepository{}
+	iKeyRepository := &utils.IKeyRepository{}
+	fileXmlRepository := &file.FileXmlRepository{}
+	fileCsvRepository := &file.FileCsvRepository{}
+	bankService := service.NewBankService(bankRepository, fileCsvRepository)
+	paymentRepository := &database.PaymentRepository{}
+	paymentService := service.NewPaymentService(paymentRepository, fileXmlRepository, iKeyRepository)
 	paymentController := controller.NewPaymentController(paymentService)
 
 	go bankService.HandleBankResponses(responseChannel, "http://localhost:8080/client/webhook")

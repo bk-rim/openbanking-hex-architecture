@@ -1,12 +1,12 @@
-package repository
+package database
 
 import (
 	"github.com/bk-rim/openbanking/model"
 )
 
-type SqlitePaymentRepository struct{}
+type PaymentRepository struct{}
 
-func (pr *SqlitePaymentRepository) Save(payment model.Payment) error {
+func (pr *PaymentRepository) Save(payment model.Payment) error {
 	_, err := db.Exec("INSERT INTO payments (idempotency, debtor_iban, debtor_name, creditor_iban, creditor_name, amount, status) VALUES (?, ?, ?, ?, ?, ?, ?)", payment.IdempotencyUniqueKey, payment.DebtorIBAN, payment.DebtorName, payment.CreditorIBAN, payment.CreditorName, payment.Amount, "PENDING")
 	if err != nil {
 		return err
@@ -14,7 +14,7 @@ func (pr *SqlitePaymentRepository) Save(payment model.Payment) error {
 	return nil
 }
 
-func (pr *SqlitePaymentRepository) FindAll() ([]model.Payment, error) {
+func (pr *PaymentRepository) FindAll() ([]model.Payment, error) {
 	rows, err := db.Query("SELECT idempotency, debtor_iban, debtor_name, creditor_iban, creditor_name, amount, status FROM payments")
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (pr *SqlitePaymentRepository) FindAll() ([]model.Payment, error) {
 	return payments, nil
 }
 
-func (pr *SqlitePaymentRepository) FindByIbanCdt(iban string) ([]model.Payment, error) {
+func (pr *PaymentRepository) FindByIbanCdt(iban string) ([]model.Payment, error) {
 	rows, err := db.Query("SELECT idempotency, debtor_iban, debtor_name, creditor_iban, creditor_name, amount, status FROM payments WHERE creditor_iban = $1", iban)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (pr *SqlitePaymentRepository) FindByIbanCdt(iban string) ([]model.Payment, 
 	return payments, nil
 }
 
-func (pr *SqlitePaymentRepository) FindByIbanDbt(iban string) ([]model.Payment, error) {
+func (pr *PaymentRepository) FindByIbanDbt(iban string) ([]model.Payment, error) {
 	rows, err := db.Query("SELECT idempotency, debtor_iban, debtor_name, creditor_iban, creditor_name, amount, status FROM payments WHERE debtor_iban = $1", iban)
 	if err != nil {
 		return nil, err

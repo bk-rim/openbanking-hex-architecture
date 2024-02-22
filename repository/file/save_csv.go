@@ -1,4 +1,4 @@
-package utils
+package file
 
 import (
 	"os"
@@ -12,31 +12,9 @@ import (
 	"github.com/bk-rim/openbanking/model"
 )
 
-func DepositPaymentInBankFolder(xmlData []byte, idempotencyKey string, responseChannel chan<- model.PaymentResponse) {
+type FileCsvRepository struct{}
 
-	bankFolderPath := os.Getenv("BANK_FOLDER_PATH")
-	if bankFolderPath == "" {
-		fmt.Println("BANK_FOLDER_PATH environment variable is not set")
-		os.Exit(1)
-	}
-
-	if err := os.MkdirAll(bankFolderPath, os.ModePerm); err != nil {
-		responseChannel <- model.PaymentResponse{Id: idempotencyKey, Status: "ERROR", Error: err.Error()}
-		return
-	}
-
-	xmlFilePath := filepath.Join(bankFolderPath, fmt.Sprintf("%s.xml", "payment-"+idempotencyKey))
-
-	if err := os.WriteFile(xmlFilePath, xmlData, os.ModePerm); err != nil {
-		responseChannel <- model.PaymentResponse{Id: idempotencyKey, Status: "ERROR", Error: err.Error()}
-		return
-	}
-
-	responseChannel <- model.PaymentResponse{Id: idempotencyKey, Status: "PENDING", Error: ""}
-
-}
-
-func DepositResponseInBankFolder(response model.PaymentResponse) {
+func (fr *FileCsvRepository) Save(response model.PaymentResponse) {
 	bankFolderPath := os.Getenv("BANK_FOLDER_PATH")
 	if bankFolderPath == "" {
 		fmt.Println("BANK_FOLDER_PATH environment variable is not set")

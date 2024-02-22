@@ -8,7 +8,9 @@ import (
 	"strconv"
 )
 
-func GenerateIdempotentKey() (string, error) {
+type IKeyRepository struct{}
+
+func (ik *IKeyRepository) Generate() (string, error) {
 	keyLengthStr := os.Getenv("IDEMPOTENT_KEY_LENGTH")
 	if keyLengthStr == "" {
 		return "", errors.New("IDEMPOTENT_KEY_LENGTH environment variable is not set")

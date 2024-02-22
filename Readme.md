@@ -12,6 +12,7 @@
 - hexagonal architecture
 
 ```md
+.
 ├── api
 │   ├── controller
 │   │   ├── payment_controller.go
@@ -20,15 +21,13 @@
 │   └── middleware
 │       └── auth.go
 ├── domain
-│   ├── service
-│   │   ├── bank_service.go
-│   │   ├── bank_service_test.go
-│   │   ├── payment_service.go
-│   │   └── payment_service_test.go
-│   └── utils
-│       ├── depositFile.go
-│       ├── generateIdempotentKey.go
-│       └── generateXml.go
+│   └── service
+│       ├── bank_service.go
+│       ├── bank_service_test.go
+│       ├── generatePaymentXml.go
+│       ├── payment_service.go
+│       ├── payment_service_test.go
+│       └── simulateBankProcessing.go
 ├── go.mod
 ├── go.sum
 ├── helper
@@ -38,12 +37,16 @@
 │   └── payment_model.go
 ├── Readme.md
 └── repository
-    ├── mongodb
-    ├── postgres
-    └── sqlite
-        ├── sqlite_bank_repository.go
-        ├── sqlite_init_DB.go
-        └── sqlite_payment_repository.go
+    ├── file
+    │   ├── save_csv.go
+    │   └── save_xml.go
+    ├── sqlite
+    │   ├── bank_repository.go
+    │   ├── init_DB.go
+    │   └── payment_repository.go
+    └── utils
+        └── IKey_repository.go
+
 ```
 
 ## Features

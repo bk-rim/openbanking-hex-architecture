@@ -1,4 +1,4 @@
-package utils
+package service
 
 import (
 	"encoding/xml"
@@ -33,7 +33,7 @@ type CdtrAcctType struct {
 	} `xml:"Id"`
 }
 
-func GenerateXML(payment model.Payment) ([]byte, error) {
+func generateXML(payment model.Payment) ([]byte, error) {
 	xmlData := &struct {
 		XMLName xml.Name   `xml:"Document"`
 		GrpHdr  GrpHdrType `xml:"GrpHdr"`
